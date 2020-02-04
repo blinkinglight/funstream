@@ -8,15 +8,34 @@ default_group: Unknown
 # Default logo value when it's empty or not set 
 default_logo: http://example.com/generic_iptv.png
 
-# Define logos for channels. It can also be used to override existing logos if
-# needed, or if channel does not have logo.
-# Note 1: If you rename channels, then put new channels names here
-# Note 2: These channel to logo mappings has highest priority
-logos:
-  - channel: NASA HD
-    logo: http://example.com/nasa.png
-  - channel: SpaceX
-    logo: http://example.com/spacex.png
+# Below settings apply to all channels (including channels from playlists)
+# Note 1: If you use customization here, then you don't need to customize anything for each playlist.
+# Note 2: If you already customized some of your playlists, then 'global' customization will be applied on top of that.
+# Note 3: These global settings have highest priority, so your defined static channels will be overriden as well.
+global:
+  change_logos:
+    - channel: NASA HD
+      logo: http://example.com/nasa.png
+    - channel: SpaceX
+      logo: http://example.com/spacex.png
+  rename_channels:
+    - from: Channel 1 TEST
+      to: Channel 1
+    - from: Channel 2 HD
+      to: Channel 2
+  rename_groups:
+    - from: XXX
+      to: Porn
+    - from: Test
+      to: Unknown
+  exclude_channels: # If you rename channels, then put new channels names here
+    - TEST Channel
+    - TEST Channel 2
+    - TEST Channel 3 HD
+  exclude_groups: # If you rename groups, then put new group names here
+    - Unknown
+    - XXX
+    - Porn
 
 # These channels will ignore ordered sort and will be shown at the top of the channels list
 # Note 1: If you rename channels, then put new channels names here
@@ -38,8 +57,14 @@ channels:
     logo: https://example.com/channel3.png
 
 # Define M3U playlists
+# Note 1: Below customization will be performed **before** applying 'global' customization.
 playlists:
   - url: http://example.com/playlist.m3u
+    change_logos:
+      - channel: NASA HD
+        logo: http://example.com/nasa.png
+      - channel: SpaceX
+        logo: http://example.com/spacex.png
     rename_channels:
       - from: Channel 1 TEST
         to: Channel 1

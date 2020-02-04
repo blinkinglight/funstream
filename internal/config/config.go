@@ -22,10 +22,22 @@ var userAgent string
 type config struct {
 	DefaultGroup string `yaml:"default_group"`
 	DefaultLogo  string `yaml:"default_logo"`
-	Logos        []struct {
-		Channel string `yaml:"channel"`
-		Logo    string `yaml:"logo"`
-	} `yaml:"logos"`
+	Global       struct {
+		ChangeLogos []struct {
+			Channel string `yaml:"channel"`
+			Logo    string `yaml:"logo"`
+		} `yaml:"change_logos"`
+		RenameChannels []struct {
+			From string `yaml:"from"`
+			To   string `yaml:"to"`
+		} `yaml:"rename_channels"`
+		RenameGroups []struct {
+			From string `yaml:"from"`
+			To   string `yaml:"to"`
+		} `yaml:"rename_groups"`
+		ExcludeChannels []string `yaml:"exclude_channels"`
+		ExcludeGroups   []string `yaml:"exclude_groups"`
+	} `yaml:"global"`
 	DisplayFirst []string `yaml:"display_first"`
 	Channels     []struct {
 		Title string `yaml:"title"`
@@ -34,7 +46,11 @@ type config struct {
 		Group string `yaml:"group"`
 	} `yaml:"channels"`
 	Playlists []struct {
-		URL            string `yaml:"url"`
+		URL         string `yaml:"url"`
+		ChangeLogos []struct {
+			Channel string `yaml:"channel"`
+			Logo    string `yaml:"logo"`
+		} `yaml:"change_logos"`
 		RenameChannels []struct {
 			From string `yaml:"from"`
 			To   string `yaml:"to"`
@@ -252,18 +268,44 @@ func parseRawChannel(rawChannel string) (logo, group, title, link string) {
 
 // Normalizes all titles for further comparisons.
 func (c *config) normalizeEverything() {
+	// Default group title
 	c.DefaultGroup = normalize(c.DefaultGroup)
-	for i := 0; i < len(c.Logos); i++ {
-		c.Logos[i].Channel = normalize(c.Logos[i].Channel)
+
+	// Global settings
+	for i := 0; i < len(c.Global.ChangeLogos); i++ {
+		c.Global.ChangeLogos[i].Channel = normalize(c.Global.ChangeLogos[i].Channel)
 	}
+	for i := 0; i < len(c.Global.RenameChannels); i++ {
+		c.Global.RenameChannels[i].From = normalize(c.Global.RenameChannels[i].From)
+		c.Global.RenameChannels[i].To = normalize(c.Global.RenameChannels[i].To)
+	}
+	for i := 0; i < len(c.Global.RenameGroups); i++ {
+		c.Global.RenameGroups[i].From = normalize(c.Global.RenameGroups[i].From)
+		c.Global.RenameGroups[i].To = normalize(c.Global.RenameGroups[i].To)
+	}
+	for i := 0; i < len(c.Global.ExcludeChannels); i++ {
+		c.Global.ExcludeChannels[i] = normalize(c.Global.ExcludeChannels[i])
+	}
+	for i := 0; i < len(c.Global.ExcludeGroups); i++ {
+		c.Global.ExcludeGroups[i] = normalize(c.Global.ExcludeGroups[i])
+	}
+
+	// Display first list
 	for i := 0; i < len(c.DisplayFirst); i++ {
 		c.DisplayFirst[i] = normalize(c.DisplayFirst[i])
 	}
+
+	// Static channels
 	for i := 0; i < len(c.Channels); i++ {
 		c.Channels[i].Title = normalize(c.Channels[i].Title)
 		c.Channels[i].Group = normalize(c.Channels[i].Group)
 	}
+
+	// Playlists
 	for i := 0; i < len(c.Playlists); i++ {
+		for ii := 0; ii < len(c.Global.ChangeLogos); ii++ {
+			c.Global.ChangeLogos[ii].Channel = normalize(c.Global.ChangeLogos[ii].Channel)
+		}
 		for ii := 0; ii < len(c.Playlists[i].RenameChannels); ii++ {
 			c.Playlists[i].RenameChannels[ii].From = normalize(c.Playlists[i].RenameChannels[ii].From)
 			c.Playlists[i].RenameChannels[ii].To = normalize(c.Playlists[i].RenameChannels[ii].To)
@@ -300,6 +342,32 @@ func (c *config) validate() error {
 		}
 		if v.URL == "" {
 			return errors.New("channel's URL is empty or not set")
+		}
+	}
+
+	// Check global settings
+	for _, v := range c.Global.ChangeLogos {
+		if v.Channel == "" {
+			return errors.New("global logos cannot be changed because 'channel' is empty or not set")
+		}
+		if v.Logo == "" {
+			return errors.New("global logos cannot be changed because 'logo' is empty or not set")
+		}
+	}
+	for _, v := range c.Global.RenameChannels {
+		if v.From == "" {
+			return errors.New("global channels cannot be renamed because 'from' is empty or not set")
+		}
+		if v.To == "" {
+			return errors.New("global channels cannot be renamed because 'to' is empty or not set")
+		}
+	}
+	for _, v := range c.Global.RenameGroups {
+		if v.From == "" {
+			return errors.New("global groups cannot be renamed because 'from' is empty or not set")
+		}
+		if v.To == "" {
+			return errors.New("global groups cannot be renamed because 'to' is empty or not set")
 		}
 	}
 
